@@ -11,8 +11,8 @@ const VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN;
 // Função auxiliar para enviar mensagens via WhatsApp Cloud API
 async function sendWhatsAppMessage(data) {
   try {
-    await axios.post(
-      `https://graph.facebook.com/v19.0/${PHONE_NUMBER_ID}/messages`,
+    const response = await axios.post(
+      `https://graph.facebook.com/v20.0/${PHONE_NUMBER_ID}/messages`,
       data,
       {
         headers: {
@@ -21,8 +21,9 @@ async function sendWhatsAppMessage(data) {
         },
       }
     );
+    console.log('Mensagem enviada com sucesso:', response.data);
   } catch (error) {
-    console.error('Erro ao enviar mensagem do WhatsApp:', error.response ? error.response.data : error.message);
+    console.error('Erro ao enviar mensagem do WhatsApp:', error.response ? JSON.stringify(error.response.data) : error.message);
   }
 }
 
@@ -67,7 +68,7 @@ async function sendMainMenu(to) {
   await sendWhatsAppMessage(data);
 }
 
-// Submenu para 'Falar com Atendente' (para caso o menu principal já tenha estourado o limite de 3 botões da API)
+// Submenu para 'Falar com Atendente'
 async function sendSecondaryMenuOption(to) {
   const data = {
     messaging_product: 'whatsapp',
@@ -268,6 +269,7 @@ app.post('/webhook', async (req, res) => {
 
   if (message) {
     const from = message.from;
+    console.log(`Mensagem recebida de ${from}:`, message);
 
     // A) Clique em Botão Interativo
     if (message.type === 'interactive' && message.interactive?.type === 'button_reply') {
