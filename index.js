@@ -12,7 +12,7 @@ const VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN;
 async function sendWhatsAppMessage(data) {
   try {
     const response = await axios.post(
-      `https://graph.facebook.com/v25.0/${PHONE_NUMBER_ID}/messages`,
+      `https://graph.facebook.com/v26.0/${PHONE_NUMBER_ID}/messages`,
       data,
       {
         headers: {
@@ -260,6 +260,7 @@ app.get('/webhook', (req, res) => {
 
 // Receber e processar mensagens do WhatsApp (POST)
 app.post('/webhook', async (req, res) => {
+  console.log('WEBHOOK RECEBIDO:', JSON.stringify(req.body, null, 2));
   res.sendStatus(200);
 
   const entry = req.body.entry?.[0];
