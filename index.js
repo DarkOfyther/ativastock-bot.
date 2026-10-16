@@ -12,7 +12,7 @@ const VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN;
 async function sendWhatsAppMessage(data) {
   try {
     const response = await axios.post(
-      `https://graph.facebook.com/v20.0/${PHONE_NUMBER_ID}/messages`,
+      `https://graph.facebook.com/v25.0/${PHONE_NUMBER_ID}/messages`,
       data,
       {
         headers: {
@@ -287,7 +287,7 @@ app.post('/webhook', async (req, res) => {
         await sendMainMenu(from);
         await sendSecondaryMenuOption(from);
       }
-    } 
+    }
     // B) Mensagem de Texto (ex: "olá", "menu", etc.)
     else if (message.type === 'text') {
       await sendMainMenu(from);
