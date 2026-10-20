@@ -9,23 +9,28 @@ const PHONE_NUMBER_ID = process.env.PHONE_NUMBER_ID;
 const GRAPH_API_TOKEN = process.env.GRAPH_API_TOKEN;
 const VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN;
 
-// Nome do template aprovado na Meta
-const TEMPLATE_NAME = 'ativastock_menu_principal';
+
+// ==========================================
+// CONFIGURAÇÕES
+// ==========================================
+
+const GRAPH_API_URL =
+  `https://graph.facebook.com/v26.0/${PHONE_NUMBER_ID}/messages`;
 
 
 // ==========================================
-// ENVIAR MENSAGEM DE TEXTO
+// ENVIAR TEXTO
 // ==========================================
 
-async function enviarMensagem(to, texto) {
+async function enviarTexto(to, texto) {
 
   try {
 
-    console.log('Tentando enviar mensagem para:', to);
+    console.log('Enviando texto para:', to);
 
     const response = await axios.post(
 
-      `https://graph.facebook.com/v26.0/${PHONE_NUMBER_ID}/messages`,
+      GRAPH_API_URL,
 
       {
         messaging_product: 'whatsapp',
@@ -49,13 +54,13 @@ async function enviarMensagem(to, texto) {
     );
 
     console.log(
-      'MENSAGEM ENVIADA COM SUCESSO:',
+      'TEXTO ENVIADO:',
       JSON.stringify(response.data, null, 2)
     );
 
   } catch (error) {
 
-    console.error('ERRO AO ENVIAR MENSAGEM:');
+    console.error('ERRO AO ENVIAR TEXTO:');
 
     if (error.response) {
 
@@ -75,18 +80,18 @@ async function enviarMensagem(to, texto) {
 
 
 // ==========================================
-// ENVIAR TEMPLATE DO MENU PRINCIPAL
+// ENVIAR TEMPLATE
 // ==========================================
 
-async function enviarMenuPrincipal(to) {
+async function enviarTemplate(to) {
 
   try {
 
-    console.log('Enviando template do menu principal para:', to);
+    console.log('Enviando template para:', to);
 
     const response = await axios.post(
 
-      `https://graph.facebook.com/v26.0/${PHONE_NUMBER_ID}/messages`,
+      GRAPH_API_URL,
 
       {
         messaging_product: 'whatsapp',
@@ -96,12 +101,15 @@ async function enviarMenuPrincipal(to) {
         type: 'template',
 
         template: {
-          name: TEMPLATE_NAME,
+
+          name: 'ativastock_menu_principal',
 
           language: {
             code: 'pt_BR'
           }
+
         }
+
       },
 
       {
@@ -143,11 +151,11 @@ async function enviarMenuPrincipal(to) {
 // CONDIÇÕES COMERCIAIS
 // ==========================================
 
-async function enviarCondicoesComerciais(to) {
+async function enviarCondicoes(to) {
 
-  const texto = `CONDIÇÕES COMERCIAIS — ATIVA STOCK
+  const texto = `CONDIÇÕES COMERCIAIS
 
-• Pedido mínimo: R$ 750 + frete.
+• Pedido mínimo: R$ 750,00 + frete.
 
 • Mix de produtos: você pode combinar diferentes produtos e quantidades no mesmo pedido.
 
@@ -155,13 +163,25 @@ async function enviarCondicoesComerciais(to) {
 
 • Disponibilidade: os produtos estão sujeitos à confirmação de estoque no dia do pedido. Cores e variações conforme disponibilidade.
 
-• Pagamento: após a confirmação do orçamento, enviaremos o link de pagamento. As opções são boleto à vista, Pix, crédito à vista ou parcelado (juros por conta do comprador) e débito.
+• Pagamento: após a confirmação do orçamento, enviaremos o link de pagamento.
 
-• Entregas: frete FOB, de responsabilidade do comprador. O frete é calculado separadamente conforme o destino.
+Formas de pagamento:
+- Boleto à vista
+- Pix
+- Crédito à vista ou parcelado
+- Débito
 
-• Prazos: informados no fechamento do pedido, após consulta da disponibilidade dos produtos.`;
+Juros do parcelamento por conta do comprador.
 
-  await enviarMensagem(to, texto);
+• Entrega: frete FOB, de responsabilidade do comprador.
+
+• O frete é calculado separadamente conforme o destino.
+
+• Os prazos são informados no fechamento do pedido, após consulta da disponibilidade dos produtos.
+
+Para voltar ao menu principal, envie "menu".`;
+
+  await enviarTexto(to, texto);
 
 }
 
@@ -172,7 +192,7 @@ async function enviarCondicoesComerciais(to) {
 
 async function enviarCatalogo(to) {
 
-  const texto = `VISUALIZE NOSSO CATÁLOGO
+  const texto = `VISUALIZAR CATÁLOGO
 
 Conheça nossa seleção de produtos para revenda, organizada por categoria para facilitar sua escolha.
 
@@ -182,57 +202,260 @@ INFORMAÇÕES IMPORTANTES:
 
 • Possibilidade de combinar diferentes produtos no mesmo pedido.
 
-• Pedido mínimo de R$ 750 + frete.
+• Pedido mínimo de R$ 750,00 + frete.
 
 • Produtos sujeitos à disponibilidade de estoque.
 
+Acesse nosso catálogo:
+
+https://www.ativastock.com.br
+
 Após escolher os produtos, você poderá solicitar seu orçamento diretamente pelo site.
 
-Catálogo:
-https://www.ativastock.com.br`;
+Para voltar ao menu principal, envie "menu".`;
 
-  await enviarMensagem(to, texto);
-
-}
-
-
-// ==========================================
-// ATENDENTE
-// ==========================================
-
-async function encaminharParaAtendente(to) {
-
-  const texto = `Você está sendo direcionado para um atendente.
-
-Nossa equipe irá atendê-lo e fornecer as informações necessárias. Por favor, aguarde.
-
-Agradecemos o seu contato com a AtivaStock.`;
-
-  await enviarMensagem(to, texto);
+  await enviarTexto(to, texto);
 
 }
 
 
 // ==========================================
-// SOLICITAÇÃO DE ORÇAMENTO
+// SOLICITAR ORÇAMENTO
 // ==========================================
 
-async function tratarSolicitacaoOrcamento(to, texto) {
+async function enviarOrcamento(to) {
 
-  console.log('SOLICITAÇÃO DE ORÇAMENTO IDENTIFICADA');
+  const texto = `SOLICITAÇÃO DE ORÇAMENTO
 
-  console.log('Dados recebidos:');
-  console.log(texto);
+Para solicitar seu orçamento, acesse nosso catálogo:
 
-  const resposta = `Recebemos sua solicitação de orçamento.
+https://www.ativastock.com.br
 
-Você está sendo direcionado para um atendente, que irá informar os valores, disponibilidade dos produtos e condições de entrega.
+Escolha os produtos desejados, informe as quantidades e adicione os itens ao carrinho.
 
-Por favor, aguarde. Nossa equipe dará continuidade ao seu atendimento.
+Após concluir sua seleção, o site irá gerar automaticamente a solicitação de orçamento para envio pelo WhatsApp.
 
-Agradecemos o seu contato com a AtivaStock.`;
+Nossa equipe receberá sua solicitação e dará continuidade ao atendimento.
 
-  await enviarMensagem(to, resposta);
+Para voltar ao menu principal, envie "menu".`;
+
+  await enviarTexto(to, texto);
+
+}
+
+
+// ==========================================
+// FALAR COM ATENDENTE
+// ==========================================
+
+async function enviarAtendente(to) {
+
+  const texto = `ATENDIMENTO
+
+Você está sendo direcionado para um atendente.
+
+Descreva brevemente o assunto do seu atendimento. Sua mensagem será encaminhada para nossa equipe, que responderá assim que possível.
+
+Agradecemos o seu contato.`;
+
+  await enviarTexto(to, texto);
+
+}
+
+
+// ==========================================
+// MENU POR TEXTO
+// ==========================================
+
+async function processarTexto(to, texto) {
+
+  const mensagem = texto
+    .toLowerCase()
+    .trim();
+
+  console.log('Mensagem normalizada:', mensagem);
+
+
+  // -------------------------------
+  // SAUDAÇÃO
+  // -------------------------------
+
+  if (
+    mensagem === 'oi' ||
+    mensagem === 'olá' ||
+    mensagem === 'ola' ||
+    mensagem === 'menu' ||
+    mensagem === 'início' ||
+    mensagem === 'inicio'
+  ) {
+
+    await enviarTemplate(to);
+
+    return;
+  }
+
+
+  // -------------------------------
+  // CONDIÇÕES COMERCIAIS
+  // -------------------------------
+
+  if (
+    mensagem.includes('condições') ||
+    mensagem.includes('condicoes') ||
+    mensagem.includes('comerciais')
+  ) {
+
+    await enviarCondicoes(to);
+
+    return;
+  }
+
+
+  // -------------------------------
+  // CATÁLOGO
+  // -------------------------------
+
+  if (
+    mensagem.includes('catálogo') ||
+    mensagem.includes('catalogo')
+  ) {
+
+    await enviarCatalogo(to);
+
+    return;
+  }
+
+
+  // -------------------------------
+  // ORÇAMENTO
+  // -------------------------------
+
+  if (
+    mensagem.includes('orçamento') ||
+    mensagem.includes('orcamento')
+  ) {
+
+    await enviarOrcamento(to);
+
+    return;
+  }
+
+
+  // -------------------------------
+  // ATENDENTE
+  // -------------------------------
+
+  if (
+    mensagem.includes('atendente') ||
+    mensagem.includes('atendimento')
+  ) {
+
+    await enviarAtendente(to);
+
+    return;
+  }
+
+
+  // -------------------------------
+  // NÃO ENTENDEU
+  // -------------------------------
+
+  await enviarTexto(
+    to,
+    `Não consegui identificar sua opção.
+
+Envie "menu" para visualizar as opções disponíveis.`
+  );
+
+}
+
+
+// ==========================================
+// PROCESSAR BOTÃO DO TEMPLATE
+// ==========================================
+
+async function processarBotao(to, buttonId, buttonText) {
+
+  console.log('');
+  console.log('======================================');
+  console.log('BOTÃO CLICADO');
+  console.log('======================================');
+
+  console.log('ID:', buttonId);
+  console.log('TEXTO:', buttonText);
+
+
+  // ---------------------------------------
+  // CONDIÇÕES COMERCIAIS
+  // ---------------------------------------
+
+  if (
+    buttonId === 'condicoes_comerciais' ||
+    buttonText.toLowerCase().includes('condições') ||
+    buttonText.toLowerCase().includes('condicoes')
+  ) {
+
+    await enviarCondicoes(to);
+
+    return;
+  }
+
+
+  // ---------------------------------------
+  // CATÁLOGO
+  // ---------------------------------------
+
+  if (
+    buttonId === 'visualizar_catalogo' ||
+    buttonText.toLowerCase().includes('catálogo') ||
+    buttonText.toLowerCase().includes('catalogo')
+  ) {
+
+    await enviarCatalogo(to);
+
+    return;
+  }
+
+
+  // ---------------------------------------
+  // ORÇAMENTO
+  // ---------------------------------------
+
+  if (
+    buttonId === 'solicitar_orcamento' ||
+    buttonText.toLowerCase().includes('orçamento') ||
+    buttonText.toLowerCase().includes('orcamento')
+  ) {
+
+    await enviarOrcamento(to);
+
+    return;
+  }
+
+
+  // ---------------------------------------
+  // ATENDENTE
+  // ---------------------------------------
+
+  if (
+    buttonId === 'falar_atendente' ||
+    buttonText.toLowerCase().includes('atendente')
+  ) {
+
+    await enviarAtendente(to);
+
+    return;
+  }
+
+
+  // ---------------------------------------
+  // FALLBACK
+  // ---------------------------------------
+
+  await enviarTexto(
+    to,
+    'Não consegui identificar essa opção. Envie "menu" para voltar ao menu principal.'
+  );
 
 }
 
@@ -274,7 +497,7 @@ app.get('/webhook', (req, res) => {
 
 
 // ==========================================
-// RECEBER MENSAGEM
+// RECEBER WEBHOOK
 // ==========================================
 
 app.post('/webhook', async (req, res) => {
@@ -289,7 +512,10 @@ app.post('/webhook', async (req, res) => {
   );
 
 
-  // Responde imediatamente para a Meta
+  // ---------------------------------------
+  // RESPONDE IMEDIATAMENTE PARA A META
+  // ---------------------------------------
+
   res.sendStatus(200);
 
 
@@ -300,34 +526,19 @@ app.post('/webhook', async (req, res) => {
   if (!value) {
 
     console.log(
-      'Nenhum valor encontrado no webhook.'
+      'Nenhum value encontrado no webhook.'
     );
 
     return;
-
   }
 
 
-  // ==========================================
-  // STATUS DE MENSAGEM
-  // ==========================================
+  // ========================================
+  // VERIFICAR MENSAGEM
+  // ========================================
 
-  if (value.statuses) {
-
-    console.log(
-      'Webhook contém STATUS de mensagem.'
-    );
-
-    return;
-
-  }
-
-
-  // ==========================================
-  // LOCALIZAR MENSAGEM
-  // ==========================================
-
-  const message = value.messages?.[0];
+  const message =
+    value.messages?.[0];
 
 
   if (!message) {
@@ -337,7 +548,6 @@ app.post('/webhook', async (req, res) => {
     );
 
     return;
-
   }
 
 
@@ -353,13 +563,15 @@ app.post('/webhook', async (req, res) => {
   );
 
 
-  // ==========================================
+  // ========================================
   // MENSAGEM DE TEXTO
-  // ==========================================
+  // ========================================
 
   if (message.type === 'text') {
 
-    const texto = message.text.body.trim();
+    const texto =
+      message.text?.body || '';
+
 
     console.log(
       'TEXTO RECEBIDO:',
@@ -367,177 +579,141 @@ app.post('/webhook', async (req, res) => {
     );
 
 
-    // ==========================================
-    // SOLICITAÇÃO DE ORÇAMENTO
-    // ==========================================
-
-    if (
-      texto
-        .toUpperCase()
-        .includes('SOLICITAÇÃO DE ORÇAMENTO — ATIVA STOCK')
-      ||
-      texto
-        .toUpperCase()
-        .includes('SOLICITACAO DE ORCAMENTO — ATIVA STOCK')
-      ||
-      texto
-        .toUpperCase()
-        .includes('SOLICITACAO DE ORCAMENTO - ATIVA STOCK')
-    ) {
-
-      await tratarSolicitacaoOrcamento(
-        from,
-        texto
-      );
-
-      return;
-
-    }
-
-
-    // ==========================================
-    // MENU PRINCIPAL
-    // ==========================================
-
-    if (
-      texto.toLowerCase() === 'oi' ||
-      texto.toLowerCase() === 'olá' ||
-      texto.toLowerCase() === 'ola' ||
-      texto.toLowerCase() === 'menu' ||
-      texto.toLowerCase() === 'início' ||
-      texto.toLowerCase() === 'inicio'
-    ) {
-
-      await enviarMenuPrincipal(from);
-
-      return;
-
-    }
-
-
-    // ==========================================
-    // OUTRAS MENSAGENS
-    // ==========================================
-
-    await enviarMensagem(
+    await processarTexto(
       from,
-      'Olá! Para continuar seu atendimento, utilize o menu da AtivaStock.'
+      texto
     );
 
-    return;
 
+    return;
   }
 
 
-  // ==========================================
-  // MENSAGEM INTERATIVA
-  // ==========================================
+  // ========================================
+  // BOTÃO CLICADO
+  // ========================================
+
+  if (message.type === 'button') {
+
+    const buttonText =
+      message.button?.text || '';
+
+    const buttonId =
+      message.button?.payload || '';
+
+
+    console.log(
+      'BOTÃO RECEBIDO:',
+      buttonText
+    );
+
+    console.log(
+      'PAYLOAD:',
+      buttonId
+    );
+
+
+    await processarBotao(
+      from,
+      buttonId,
+      buttonText
+    );
+
+
+    return;
+  }
+
+
+  // ========================================
+  // BOTÃO INTERATIVO
+  // ========================================
 
   if (message.type === 'interactive') {
 
-    console.log(
-      'MENSAGEM INTERATIVA RECEBIDA'
-    );
+    const interactive =
+      message.interactive;
 
 
-    // ==========================================
-    // RESPOSTA DE BOTÃO
-    // ==========================================
+    // --------------------------------------
+    // REPLY BUTTON
+    // --------------------------------------
 
-    if (message.interactive.type === 'button_reply') {
+    if (
+      interactive?.type === 'button_reply'
+    ) {
 
       const buttonId =
-        message.interactive.button_reply.id;
+        interactive.button_reply?.id || '';
 
-      const buttonTitle =
-        message.interactive.button_reply.title;
+      const buttonText =
+        interactive.button_reply?.title || '';
 
 
       console.log(
-        'ID DO BOTÃO:',
+        'BOTÃO INTERATIVO:',
+        buttonText
+      );
+
+      console.log(
+        'ID:',
         buttonId
       );
 
-      console.log(
-        'TÍTULO DO BOTÃO:',
-        buttonTitle
+
+      await processarBotao(
+        from,
+        buttonId,
+        buttonText
       );
 
 
-      // ==========================================
-      // CONDIÇÕES COMERCIAIS
-      // ==========================================
-
-      if (
-        buttonId === 'condicoes_comerciais' ||
-        buttonTitle.toLowerCase().includes('condições comerciais')
-      ) {
-
-        await enviarCondicoesComerciais(from);
-
-        return;
-
-      }
+      return;
+    }
 
 
-      // ==========================================
-      // VISUALIZAR CATÁLOGO
-      // ==========================================
+    // --------------------------------------
+    // LIST REPLY
+    // --------------------------------------
 
-      if (
-        buttonId === 'visualizar_catalogo' ||
-        buttonTitle.toLowerCase().includes('visualizar catálogo') ||
-        buttonTitle.toLowerCase().includes('visualizar catalogo')
-      ) {
+    if (
+      interactive?.type === 'list_reply'
+    ) {
 
-        await enviarCatalogo(from);
+      const buttonId =
+        interactive.list_reply?.id || '';
 
-        return;
-
-      }
-
-
-      // ==========================================
-      // FALAR COM ATENDENTE
-      // ==========================================
-
-      if (
-        buttonId === 'falar_atendente' ||
-        buttonTitle.toLowerCase().includes('falar com atendente')
-      ) {
-
-        await encaminharParaAtendente(from);
-
-        return;
-
-      }
-
-
-      // ==========================================
-      // MENU PRINCIPAL
-      // ==========================================
-
-      if (
-        buttonId === 'menu_principal' ||
-        buttonTitle.toLowerCase().includes('menu principal') ||
-        buttonTitle.toLowerCase().includes('voltar ao menu')
-      ) {
-
-        await enviarMenuPrincipal(from);
-
-        return;
-
-      }
+      const buttonText =
+        interactive.list_reply?.title || '';
 
 
       console.log(
-        'BOTÃO NÃO RECONHECIDO:',
+        'ITEM DA LISTA:',
+        buttonText
+      );
+
+      console.log(
+        'ID:',
         buttonId
       );
 
+
+      await processarBotao(
+        from,
+        buttonId,
+        buttonText
+      );
+
+
+      return;
     }
 
   }
+
+
+  console.log(
+    'Tipo de mensagem ainda não tratado:',
+    message.type
+  );
 
 });
 
@@ -546,7 +722,9 @@ app.post('/webhook', async (req, res) => {
 // SERVIDOR
 // ==========================================
 
-const PORT = process.env.PORT || 3000;
+const PORT =
+  process.env.PORT || 3000;
+
 
 app.listen(PORT, () => {
 
