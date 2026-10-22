@@ -5,11 +5,6 @@ const app = express();
 
 app.use(express.json());
 
-
-// ======================================================
-// CONFIGURAÇÕES
-// ======================================================
-
 const PHONE_NUMBER_ID = process.env.PHONE_NUMBER_ID;
 const GRAPH_API_TOKEN = process.env.GRAPH_API_TOKEN;
 const VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN;
@@ -18,7 +13,7 @@ const GRAPH_API_VERSION = 'v26.0';
 
 
 // ======================================================
-// TEMPLATES
+// IDS DOS TEMPLATES
 // ======================================================
 
 const TEMPLATES = {
@@ -89,7 +84,6 @@ async function enviarTemplate(to, template) {
     console.log('Idioma:', template.language);
     console.log('ID:', template.id);
 
-
     const response = await axios.post(
 
       `https://graph.facebook.com/${GRAPH_API_VERSION}/${PHONE_NUMBER_ID}/messages`,
@@ -116,17 +110,13 @@ async function enviarTemplate(to, template) {
       {
 
         headers: {
-
           Authorization: `Bearer ${GRAPH_API_TOKEN}`,
-
           'Content-Type': 'application/json'
-
         }
 
       }
 
     );
-
 
     console.log('');
     console.log('TEMPLATE ENVIADO COM SUCESSO:');
@@ -135,9 +125,7 @@ async function enviarTemplate(to, template) {
       JSON.stringify(response.data, null, 2)
     );
 
-
     return response.data;
-
 
   } catch (error) {
 
@@ -145,7 +133,6 @@ async function enviarTemplate(to, template) {
     console.error('======================================');
     console.error('ERRO AO ENVIAR TEMPLATE');
     console.error('======================================');
-
 
     if (error.response) {
 
@@ -173,16 +160,13 @@ async function enviarMensagem(to, texto) {
   try {
 
     console.log('');
-    console.log('ENVIANDO MENSAGEM DE TEXTO');
-    console.log('Destinatário:', to);
-
+    console.log('Enviando mensagem de texto para:', to);
 
     const response = await axios.post(
 
       `https://graph.facebook.com/${GRAPH_API_VERSION}/${PHONE_NUMBER_ID}/messages`,
 
       {
-
         messaging_product: 'whatsapp',
 
         to: to,
@@ -192,38 +176,29 @@ async function enviarMensagem(to, texto) {
         text: {
           body: texto
         }
-
       },
 
       {
 
         headers: {
-
           Authorization: `Bearer ${GRAPH_API_TOKEN}`,
-
           'Content-Type': 'application/json'
-
         }
 
       }
 
     );
 
-
     console.log(
       'MENSAGEM ENVIADA COM SUCESSO:',
       JSON.stringify(response.data, null, 2)
     );
 
-
     return response.data;
-
 
   } catch (error) {
 
-    console.error('');
-    console.error('ERRO AO ENVIAR MENSAGEM DE TEXTO:');
-
+    console.error('ERRO AO ENVIAR MENSAGEM:');
 
     if (error.response) {
 
@@ -243,120 +218,12 @@ async function enviarMensagem(to, texto) {
 
 
 // ======================================================
-// PROCESSAR OPÇÃO DO MENU
-// ======================================================
-
-async function processarOpcao(from, opcao) {
-
-  const texto = normalizarTexto(opcao);
-
-
-  console.log('');
-  console.log('OPÇÃO IDENTIFICADA:', opcao);
-  console.log('OPÇÃO NORMALIZADA:', texto);
-
-
-  // ====================================================
-  // MENU PRINCIPAL
-  // ====================================================
-
-  if (
-
-    texto === 'oi' ||
-    texto === 'ola' ||
-    texto === 'menu' ||
-    texto === 'inicio' ||
-    texto === 'menu principal' ||
-    texto === 'voltar ao menu'
-
-  ) {
-
-    await enviarTemplate(
-      from,
-      TEMPLATES.menu
-    );
-
-    return true;
-
-  }
-
-
-  // ====================================================
-  // CONDIÇÕES COMERCIAIS
-  // ====================================================
-
-  if (
-
-    texto === 'condicoes comerciais'
-
-  ) {
-
-    await enviarTemplate(
-      from,
-      TEMPLATES.condicoes
-    );
-
-    return true;
-
-  }
-
-
-  // ====================================================
-  // CATÁLOGO
-  // ====================================================
-
-  if (
-
-    texto === 'visualizar catalogo' ||
-    texto === 'catalogo'
-
-  ) {
-
-    await enviarTemplate(
-      from,
-      TEMPLATES.catalogo
-    );
-
-    return true;
-
-  }
-
-
-  // ====================================================
-  // ATENDENTE
-  // ====================================================
-
-  if (
-
-    texto === 'falar com atendente' ||
-    texto === 'atendente'
-
-  ) {
-
-    await enviarTemplate(
-      from,
-      TEMPLATES.atendente
-    );
-
-    return true;
-
-  }
-
-
-  return false;
-
-}
-
-
-// ======================================================
 // VERIFICAÇÃO DO WEBHOOK
 // ======================================================
 
 app.get('/webhook', (req, res) => {
 
-  console.log('');
   console.log('REQUISIÇÃO DE VERIFICAÇÃO RECEBIDA');
-
 
   const mode = req.query['hub.mode'];
 
@@ -364,12 +231,9 @@ app.get('/webhook', (req, res) => {
 
   const challenge = req.query['hub.challenge'];
 
-
   if (
-
     mode === 'subscribe' &&
     token === VERIFY_TOKEN
-
   ) {
 
     console.log('WEBHOOK_VERIFIED');
@@ -379,7 +243,6 @@ app.get('/webhook', (req, res) => {
       .send(challenge);
 
   }
-
 
   console.log('ERRO NA VERIFICAÇÃO DO WEBHOOK');
 
@@ -399,22 +262,15 @@ app.post('/webhook', async (req, res) => {
   console.log('WEBHOOK RECEBIDO');
   console.log('======================================');
 
-
   console.log(
     JSON.stringify(req.body, null, 2)
   );
 
-
-  // ====================================================
-  // RESPONDER META IMEDIATAMENTE
-  // ====================================================
-
+  // Responde imediatamente para a Meta
   res.sendStatus(200);
-
 
   const value =
     req.body?.entry?.[0]?.changes?.[0]?.value;
-
 
   if (!value) {
 
@@ -443,11 +299,10 @@ app.post('/webhook', async (req, res) => {
 
 
   // ====================================================
-  // VERIFICAR MENSAGEM
+  // MENSAGEM RECEBIDA
   // ====================================================
 
   const message = value.messages?.[0];
-
 
   if (!message) {
 
@@ -459,9 +314,7 @@ app.post('/webhook', async (req, res) => {
 
   }
 
-
   const from = message.from;
-
 
   console.log('');
   console.log('REMETENTE:', from);
@@ -472,14 +325,208 @@ app.post('/webhook', async (req, res) => {
   );
 
 
-  // ======================================================
+  // ====================================================
+  // BOTÕES INTERATIVOS
+  // ====================================================
+
+  if (message.type === 'interactive') {
+
+    const interactive = message.interactive;
+
+    console.log(
+      'TIPO DO INTERACTIVE:',
+      interactive?.type
+    );
+
+
+    // ==================================================
+    // BOTÃO DE RESPOSTA
+    // ==================================================
+
+    if (interactive?.type === 'button_reply') {
+
+      const buttonId =
+        interactive.button_reply?.id || '';
+
+      const buttonTitle =
+        interactive.button_reply?.title || '';
+
+      console.log(
+        'ID DO BOTÃO:',
+        buttonId
+      );
+
+      console.log(
+        'TÍTULO DO BOTÃO:',
+        buttonTitle
+      );
+
+
+      const opcao = normalizarTexto(
+        `${buttonId} ${buttonTitle}`
+      );
+
+
+      // ================================================
+      // VOLTAR PARA O MENU
+      // ================================================
+
+      if (
+        opcao.includes('voltar_para_o_menu') ||
+        opcao.includes('voltar_para_menu') ||
+        opcao.includes('voltar_menu') ||
+        opcao.includes('voltar para o menu') ||
+        opcao.includes('voltar menu')
+      ) {
+
+        console.log(
+          'BOTÃO VOLTAR AO MENU IDENTIFICADO'
+        );
+
+        await enviarTemplate(
+          from,
+          TEMPLATES.menu
+        );
+
+        return;
+
+      }
+
+
+      // ================================================
+      // CONDIÇÕES COMERCIAIS
+      // ================================================
+
+      if (
+        opcao.includes('condicoes_comerciais') ||
+        opcao.includes('condicoes comerciais')
+      ) {
+
+        await enviarTemplate(
+          from,
+          TEMPLATES.condicoes
+        );
+
+        return;
+
+      }
+
+
+      // ================================================
+      // CATÁLOGO
+      // ================================================
+
+      if (
+        opcao.includes('catalogo') ||
+        opcao.includes('catálogo')
+      ) {
+
+        await enviarTemplate(
+          from,
+          TEMPLATES.catalogo
+        );
+
+        return;
+
+      }
+
+
+      // ================================================
+      // ATENDENTE
+      // ================================================
+
+      if (
+        opcao.includes('atendente') ||
+        opcao.includes('falar com atendente')
+      ) {
+
+        await enviarTemplate(
+          from,
+          TEMPLATES.atendente
+        );
+
+        return;
+
+      }
+
+
+      console.log(
+        'Botão interativo não reconhecido.'
+      );
+
+      return;
+
+    }
+
+  }
+
+
+  // ====================================================
+  // MENSAGEM DO TIPO BUTTON
+  // ====================================================
+
+  if (message.type === 'button') {
+
+    const buttonText =
+      message.button?.text || '';
+
+    const buttonPayload =
+      message.button?.payload || '';
+
+    console.log(
+      'TEXTO DO BOTÃO:',
+      buttonText
+    );
+
+    console.log(
+      'PAYLOAD DO BOTÃO:',
+      buttonPayload
+    );
+
+
+    const opcao = normalizarTexto(
+      `${buttonText} ${buttonPayload}`
+    );
+
+
+    // ================================================
+    // VOLTAR AO MENU
+    // ================================================
+
+    if (
+      opcao.includes('voltar para o menu') ||
+      opcao.includes('voltar menu') ||
+      opcao.includes('voltar_para_o_menu') ||
+      opcao.includes('voltar_menu')
+    ) {
+
+      console.log(
+        'BOTÃO VOLTAR AO MENU IDENTIFICADO'
+      );
+
+      await enviarTemplate(
+        from,
+        TEMPLATES.menu
+      );
+
+      return;
+
+    }
+
+  }
+
+
+  // ====================================================
   // MENSAGEM DE TEXTO
-  // ======================================================
+  // ====================================================
 
   if (message.type === 'text') {
 
     const textoOriginal =
       message.text?.body || '';
+
+    const texto =
+      normalizarTexto(textoOriginal);
 
 
     console.log(
@@ -487,295 +534,125 @@ app.post('/webhook', async (req, res) => {
       textoOriginal
     );
 
+    console.log(
+      'Mensagem normalizada:',
+      texto
+    );
 
-    const processado =
-      await processarOpcao(
+
+    // ================================================
+    // MENU PRINCIPAL
+    // ================================================
+
+    if (
+      texto === 'oi' ||
+      texto === 'ola' ||
+      texto === 'menu' ||
+      texto === 'inicio'
+    ) {
+
+      await enviarTemplate(
         from,
-        textoOriginal
+        TEMPLATES.menu
       );
-
-
-    if (processado) {
 
       return;
 
     }
 
 
+    // ================================================
+    // CONDIÇÕES COMERCIAIS
+    // ================================================
+
+    if (
+      texto === 'condicoes comerciais'
+    ) {
+
+      await enviarTemplate(
+        from,
+        TEMPLATES.condicoes
+      );
+
+      return;
+
+    }
+
+
+    // ================================================
+    // CATÁLOGO
+    // ================================================
+
+    if (
+      texto === 'visualizar catalogo' ||
+      texto === 'catalogo'
+    ) {
+
+      await enviarTemplate(
+        from,
+        TEMPLATES.catalogo
+      );
+
+      return;
+
+    }
+
+
+    // ================================================
+    // ATENDENTE
+    // ================================================
+
+    if (
+      texto === 'falar com atendente' ||
+      texto === 'atendente'
+    ) {
+
+      await enviarTemplate(
+        from,
+        TEMPLATES.atendente
+      );
+
+      return;
+
+    }
+
+
+    // ================================================
+    // VOLTAR AO MENU
+    // ================================================
+
+    if (
+      texto === 'voltar ao menu' ||
+      texto === 'menu principal'
+    ) {
+
+      await enviarTemplate(
+        from,
+        TEMPLATES.menu
+      );
+
+      return;
+
+    }
+
+
+    // ================================================
+    // MENSAGEM NÃO RECONHECIDA
+    // ================================================
+
     await enviarMensagem(
-
       from,
-
       'Não consegui identificar sua opção. Por favor, envie "oi" para acessar o menu principal.'
-
     );
-
 
     return;
 
   }
 
 
-  // ======================================================
-  // BOTÃO
-  // ======================================================
-
-  if (message.type === 'button') {
-
-    const textoBotao =
-      message.button?.text || '';
-
-    const payloadBotao =
-      message.button?.payload || '';
-
-
-    console.log('');
-    console.log('======================================');
-    console.log('BOTÃO RECEBIDO');
-    console.log('======================================');
-
-    console.log(
-      'Texto do botão:',
-      textoBotao
-    );
-
-    console.log(
-      'Payload do botão:',
-      payloadBotao
-    );
-
-
-    // Primeiro tenta o payload
-    let processado = false;
-
-
-    if (payloadBotao) {
-
-      processado =
-        await processarOpcao(
-          from,
-          payloadBotao
-        );
-
-    }
-
-
-    // Se o payload não funcionar,
-    // tenta o texto visível do botão
-
-    if (!processado && textoBotao) {
-
-      processado =
-        await processarOpcao(
-          from,
-          textoBotao
-        );
-
-    }
-
-
-    if (processado) {
-
-      return;
-
-    }
-
-
-    console.log(
-      'Botão não reconhecido.'
-    );
-
-
-    await enviarMensagem(
-
-      from,
-
-      'Não consegui identificar essa opção. Por favor, envie "oi" para acessar o menu principal.'
-
-    );
-
-
-    return;
-
-  }
-
-
-  // ======================================================
-  // MENSAGEM INTERATIVA
-  // ======================================================
-
-  if (message.type === 'interactive') {
-
-    console.log('');
-    console.log('======================================');
-    console.log('INTERAÇÃO RECEBIDA');
-    console.log('======================================');
-
-
-    // ----------------------------------------------
-    // REPLY BUTTON
-    // ----------------------------------------------
-
-    if (message.interactive?.type === 'button_reply') {
-
-      const buttonReply =
-        message.interactive.button_reply;
-
-
-      const id =
-        buttonReply?.id || '';
-
-      const title =
-        buttonReply?.title || '';
-
-
-      console.log(
-        'ID DO BOTÃO:',
-        id
-      );
-
-      console.log(
-        'TÍTULO DO BOTÃO:',
-        title
-      );
-
-
-      let processado = false;
-
-
-      // Primeiro tenta o ID
-      if (id) {
-
-        processado =
-          await processarOpcao(
-            from,
-            id
-          );
-
-      }
-
-
-      // Depois tenta o título
-      if (!processado && title) {
-
-        processado =
-          await processarOpcao(
-            from,
-            title
-          );
-
-      }
-
-
-      if (processado) {
-
-        return;
-
-      }
-
-
-      await enviarMensagem(
-
-        from,
-
-        'Não consegui identificar essa opção. Por favor, envie "oi" para acessar o menu principal.'
-
-      );
-
-
-      return;
-
-    }
-
-
-    // ----------------------------------------------
-    // LIST REPLY
-    // ----------------------------------------------
-
-    if (message.interactive?.type === 'list_reply') {
-
-      const listReply =
-        message.interactive.list_reply;
-
-
-      const id =
-        listReply?.id || '';
-
-      const title =
-        listReply?.title || '';
-
-
-      console.log(
-        'ID DA LISTA:',
-        id
-      );
-
-      console.log(
-        'TÍTULO DA LISTA:',
-        title
-      );
-
-
-      let processado = false;
-
-
-      if (id) {
-
-        processado =
-          await processarOpcao(
-            from,
-            id
-          );
-
-      }
-
-
-      if (!processado && title) {
-
-        processado =
-          await processarOpcao(
-            from,
-            title
-          );
-
-      }
-
-
-      if (processado) {
-
-        return;
-
-      }
-
-
-      await enviarMensagem(
-
-        from,
-
-        'Não consegui identificar essa opção. Por favor, envie "oi" para acessar o menu principal.'
-
-      );
-
-
-      return;
-
-    }
-
-
-    console.log(
-      'Tipo de interação não tratado:',
-      message.interactive?.type
-    );
-
-
-    return;
-
-  }
-
-
-  // ======================================================
-  // OUTROS TIPOS
-  // ======================================================
+  // ====================================================
+  // OUTROS TIPOS DE MENSAGEM
+  // ====================================================
 
   console.log(
     'Tipo de mensagem não tratado:',
@@ -789,9 +666,7 @@ app.post('/webhook', async (req, res) => {
 // SERVIDOR
 // ======================================================
 
-const PORT =
-  process.env.PORT || 3000;
-
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
 
