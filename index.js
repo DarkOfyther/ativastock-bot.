@@ -5,93 +5,94 @@ const app = express();
 
 app.use(express.json());
 
+
+// ======================================================
+// CONFIGURAÇÕES
+// ======================================================
+
 const PHONE_NUMBER_ID = process.env.PHONE_NUMBER_ID;
 const GRAPH_API_TOKEN = process.env.GRAPH_API_TOKEN;
 const VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN;
 
-
-// ==========================================
-// CONFIGURAÇÕES
-// ==========================================
-
-const GRAPH_API_URL =
-  `https://graph.facebook.com/v26.0/${PHONE_NUMBER_ID}/messages`;
+const GRAPH_API_VERSION = 'v26.0';
 
 
-// ==========================================
-// ENVIAR TEXTO
-// ==========================================
+// ======================================================
+// TEMPLATES
+// ======================================================
 
-async function enviarTexto(to, texto) {
+const TEMPLATES = {
 
-  try {
+  menu: {
+    id: '4770516739844282',
+    name: 'ativastock_menu_principal',
+    language: 'pt_BR'
+  },
 
-    console.log('Enviando texto para:', to);
+  condicoes: {
+    id: '1120628563713870',
+    name: 'ativastock_condicoes_comerciais',
+    language: 'pt_BR'
+  },
 
-    const response = await axios.post(
+  catalogo: {
+    id: '1114521937976970',
+    name: 'ativastock_catalogo',
+    language: 'pt_BR'
+  },
 
-      GRAPH_API_URL,
+  atendente: {
+    id: '1858199415615505',
+    name: 'ativastock_atendente',
+    language: 'pt_BR'
+  },
 
-      {
-        messaging_product: 'whatsapp',
-
-        to: to,
-
-        type: 'text',
-
-        text: {
-          body: texto
-        }
-      },
-
-      {
-        headers: {
-          Authorization: `Bearer ${GRAPH_API_TOKEN}`,
-          'Content-Type': 'application/json'
-        }
-      }
-
-    );
-
-    console.log(
-      'TEXTO ENVIADO:',
-      JSON.stringify(response.data, null, 2)
-    );
-
-  } catch (error) {
-
-    console.error('ERRO AO ENVIAR TEXTO:');
-
-    if (error.response) {
-
-      console.error(
-        JSON.stringify(error.response.data, null, 2)
-      );
-
-    } else {
-
-      console.error(error.message);
-
-    }
-
+  recebimentoOrcamento: {
+    id: '2955667834790480',
+    name: 'ativastock_orcamento_recebido',
+    language: 'pt_BR'
   }
+
+};
+
+
+// ======================================================
+// NORMALIZAR TEXTO
+// ======================================================
+
+function normalizarTexto(texto) {
+
+  return texto
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
 
 }
 
 
-// ==========================================
+// ======================================================
 // ENVIAR TEMPLATE
-// ==========================================
+// ======================================================
 
-async function enviarTemplate(to) {
+async function enviarTemplate(to, template) {
 
   try {
 
-    console.log('Enviando template para:', to);
+    console.log('');
+    console.log('======================================');
+    console.log('ENVIANDO TEMPLATE');
+    console.log('======================================');
+
+    console.log('Destinatário:', to);
+    console.log('Template:', template.name);
+    console.log('Idioma:', template.language);
+    console.log('ID:', template.id);
+
 
     const response = await axios.post(
 
-      GRAPH_API_URL,
+      `https://graph.facebook.com/${GRAPH_API_VERSION}/${PHONE_NUMBER_ID}/messages`,
 
       {
         messaging_product: 'whatsapp',
@@ -102,10 +103,10 @@ async function enviarTemplate(to) {
 
         template: {
 
-          name: 'ativastock_menu_principal',
+          name: template.name,
 
           language: {
-            code: 'pt_BR'
+            code: template.language
           }
 
         }
@@ -113,22 +114,38 @@ async function enviarTemplate(to) {
       },
 
       {
+
         headers: {
+
           Authorization: `Bearer ${GRAPH_API_TOKEN}`,
+
           'Content-Type': 'application/json'
+
         }
+
       }
 
     );
 
+
+    console.log('');
+    console.log('TEMPLATE ENVIADO COM SUCESSO:');
+
     console.log(
-      'TEMPLATE ENVIADO COM SUCESSO:',
       JSON.stringify(response.data, null, 2)
     );
 
+
+    return response.data;
+
+
   } catch (error) {
 
-    console.error('ERRO AO ENVIAR TEMPLATE:');
+    console.error('');
+    console.error('======================================');
+    console.error('ERRO AO ENVIAR TEMPLATE');
+    console.error('======================================');
+
 
     if (error.response) {
 
@@ -147,326 +164,199 @@ async function enviarTemplate(to) {
 }
 
 
-// ==========================================
-// CONDIÇÕES COMERCIAIS
-// ==========================================
+// ======================================================
+// ENVIAR MENSAGEM DE TEXTO
+// ======================================================
 
-async function enviarCondicoes(to) {
+async function enviarMensagem(to, texto) {
 
-  const texto = `CONDIÇÕES COMERCIAIS
+  try {
 
-• Pedido mínimo: R$ 750,00 + frete.
+    console.log('');
+    console.log('ENVIANDO MENSAGEM DE TEXTO');
+    console.log('Destinatário:', to);
 
-• Mix de produtos: você pode combinar diferentes produtos e quantidades no mesmo pedido.
 
-• Preços: trabalhamos com faixas de preço conforme a quantidade adquirida de cada produto.
+    const response = await axios.post(
 
-• Disponibilidade: os produtos estão sujeitos à confirmação de estoque no dia do pedido. Cores e variações conforme disponibilidade.
+      `https://graph.facebook.com/${GRAPH_API_VERSION}/${PHONE_NUMBER_ID}/messages`,
 
-• Pagamento: após a confirmação do orçamento, enviaremos o link de pagamento.
+      {
 
-Formas de pagamento:
-- Boleto à vista
-- Pix
-- Crédito à vista ou parcelado
-- Débito
+        messaging_product: 'whatsapp',
 
-Juros do parcelamento por conta do comprador.
+        to: to,
 
-• Entrega: frete FOB, de responsabilidade do comprador.
+        type: 'text',
 
-• O frete é calculado separadamente conforme o destino.
+        text: {
+          body: texto
+        }
 
-• Os prazos são informados no fechamento do pedido, após consulta da disponibilidade dos produtos.
+      },
 
-Para voltar ao menu principal, envie "menu".`;
+      {
 
-  await enviarTexto(to, texto);
+        headers: {
+
+          Authorization: `Bearer ${GRAPH_API_TOKEN}`,
+
+          'Content-Type': 'application/json'
+
+        }
+
+      }
+
+    );
+
+
+    console.log(
+      'MENSAGEM ENVIADA COM SUCESSO:',
+      JSON.stringify(response.data, null, 2)
+    );
+
+
+    return response.data;
+
+
+  } catch (error) {
+
+    console.error('');
+    console.error('ERRO AO ENVIAR MENSAGEM DE TEXTO:');
+
+
+    if (error.response) {
+
+      console.error(
+        JSON.stringify(error.response.data, null, 2)
+      );
+
+    } else {
+
+      console.error(error.message);
+
+    }
+
+  }
 
 }
 
 
-// ==========================================
-// CATÁLOGO
-// ==========================================
+// ======================================================
+// PROCESSAR OPÇÃO DO MENU
+// ======================================================
 
-async function enviarCatalogo(to) {
+async function processarOpcao(from, opcao) {
 
-  const texto = `VISUALIZAR CATÁLOGO
+  const texto = normalizarTexto(opcao);
 
-Conheça nossa seleção de produtos para revenda, organizada por categoria para facilitar sua escolha.
-
-Nosso catálogo é atualizado periodicamente e conta com diversas opções para seu negócio.
-
-INFORMAÇÕES IMPORTANTES:
-
-• Possibilidade de combinar diferentes produtos no mesmo pedido.
-
-• Pedido mínimo de R$ 750,00 + frete.
-
-• Produtos sujeitos à disponibilidade de estoque.
-
-Acesse nosso catálogo:
-
-https://www.ativastock.com.br
-
-Após escolher os produtos, você poderá solicitar seu orçamento diretamente pelo site.
-
-Para voltar ao menu principal, envie "menu".`;
-
-  await enviarTexto(to, texto);
-
-}
-
-
-// ==========================================
-// SOLICITAR ORÇAMENTO
-// ==========================================
-
-async function enviarOrcamento(to) {
-
-  const texto = `SOLICITAÇÃO DE ORÇAMENTO
-
-Para solicitar seu orçamento, acesse nosso catálogo:
-
-https://www.ativastock.com.br
-
-Escolha os produtos desejados, informe as quantidades e adicione os itens ao carrinho.
-
-Após concluir sua seleção, o site irá gerar automaticamente a solicitação de orçamento para envio pelo WhatsApp.
-
-Nossa equipe receberá sua solicitação e dará continuidade ao atendimento.
-
-Para voltar ao menu principal, envie "menu".`;
-
-  await enviarTexto(to, texto);
-
-}
-
-
-// ==========================================
-// FALAR COM ATENDENTE
-// ==========================================
-
-async function enviarAtendente(to) {
-
-  const texto = `ATENDIMENTO
-
-Você está sendo direcionado para um atendente.
-
-Descreva brevemente o assunto do seu atendimento. Sua mensagem será encaminhada para nossa equipe, que responderá assim que possível.
-
-Agradecemos o seu contato.`;
-
-  await enviarTexto(to, texto);
-
-}
-
-
-// ==========================================
-// MENU POR TEXTO
-// ==========================================
-
-async function processarTexto(to, texto) {
-
-  const mensagem = texto
-    .toLowerCase()
-    .trim();
-
-  console.log('Mensagem normalizada:', mensagem);
-
-
-  // -------------------------------
-  // SAUDAÇÃO
-  // -------------------------------
-
-  if (
-    mensagem === 'oi' ||
-    mensagem === 'olá' ||
-    mensagem === 'ola' ||
-    mensagem === 'menu' ||
-    mensagem === 'início' ||
-    mensagem === 'inicio'
-  ) {
-
-    await enviarTemplate(to);
-
-    return;
-  }
-
-
-  // -------------------------------
-  // CONDIÇÕES COMERCIAIS
-  // -------------------------------
-
-  if (
-    mensagem.includes('condições') ||
-    mensagem.includes('condicoes') ||
-    mensagem.includes('comerciais')
-  ) {
-
-    await enviarCondicoes(to);
-
-    return;
-  }
-
-
-  // -------------------------------
-  // CATÁLOGO
-  // -------------------------------
-
-  if (
-    mensagem.includes('catálogo') ||
-    mensagem.includes('catalogo')
-  ) {
-
-    await enviarCatalogo(to);
-
-    return;
-  }
-
-
-  // -------------------------------
-  // ORÇAMENTO
-  // -------------------------------
-
-  if (
-    mensagem.includes('orçamento') ||
-    mensagem.includes('orcamento')
-  ) {
-
-    await enviarOrcamento(to);
-
-    return;
-  }
-
-
-  // -------------------------------
-  // ATENDENTE
-  // -------------------------------
-
-  if (
-    mensagem.includes('atendente') ||
-    mensagem.includes('atendimento')
-  ) {
-
-    await enviarAtendente(to);
-
-    return;
-  }
-
-
-  // -------------------------------
-  // NÃO ENTENDEU
-  // -------------------------------
-
-  await enviarTexto(
-    to,
-    `Não consegui identificar sua opção.
-
-Envie "menu" para visualizar as opções disponíveis.`
-  );
-
-}
-
-
-// ==========================================
-// PROCESSAR BOTÃO DO TEMPLATE
-// ==========================================
-
-async function processarBotao(to, buttonId, buttonText) {
 
   console.log('');
-  console.log('======================================');
-  console.log('BOTÃO CLICADO');
-  console.log('======================================');
-
-  console.log('ID:', buttonId);
-  console.log('TEXTO:', buttonText);
+  console.log('OPÇÃO IDENTIFICADA:', opcao);
+  console.log('OPÇÃO NORMALIZADA:', texto);
 
 
-  // ---------------------------------------
+  // ====================================================
+  // MENU PRINCIPAL
+  // ====================================================
+
+  if (
+
+    texto === 'oi' ||
+    texto === 'ola' ||
+    texto === 'menu' ||
+    texto === 'inicio' ||
+    texto === 'menu principal' ||
+    texto === 'voltar ao menu'
+
+  ) {
+
+    await enviarTemplate(
+      from,
+      TEMPLATES.menu
+    );
+
+    return true;
+
+  }
+
+
+  // ====================================================
   // CONDIÇÕES COMERCIAIS
-  // ---------------------------------------
+  // ====================================================
 
   if (
-    buttonId === 'condicoes_comerciais' ||
-    buttonText.toLowerCase().includes('condições') ||
-    buttonText.toLowerCase().includes('condicoes')
+
+    texto === 'condicoes comerciais'
+
   ) {
 
-    await enviarCondicoes(to);
+    await enviarTemplate(
+      from,
+      TEMPLATES.condicoes
+    );
 
-    return;
+    return true;
+
   }
 
 
-  // ---------------------------------------
+  // ====================================================
   // CATÁLOGO
-  // ---------------------------------------
+  // ====================================================
 
   if (
-    buttonId === 'visualizar_catalogo' ||
-    buttonText.toLowerCase().includes('catálogo') ||
-    buttonText.toLowerCase().includes('catalogo')
+
+    texto === 'visualizar catalogo' ||
+    texto === 'catalogo'
+
   ) {
 
-    await enviarCatalogo(to);
+    await enviarTemplate(
+      from,
+      TEMPLATES.catalogo
+    );
 
-    return;
+    return true;
+
   }
 
 
-  // ---------------------------------------
-  // ORÇAMENTO
-  // ---------------------------------------
-
-  if (
-    buttonId === 'solicitar_orcamento' ||
-    buttonText.toLowerCase().includes('orçamento') ||
-    buttonText.toLowerCase().includes('orcamento')
-  ) {
-
-    await enviarOrcamento(to);
-
-    return;
-  }
-
-
-  // ---------------------------------------
+  // ====================================================
   // ATENDENTE
-  // ---------------------------------------
+  // ====================================================
 
   if (
-    buttonId === 'falar_atendente' ||
-    buttonText.toLowerCase().includes('atendente')
+
+    texto === 'falar com atendente' ||
+    texto === 'atendente'
+
   ) {
 
-    await enviarAtendente(to);
+    await enviarTemplate(
+      from,
+      TEMPLATES.atendente
+    );
 
-    return;
+    return true;
+
   }
 
 
-  // ---------------------------------------
-  // FALLBACK
-  // ---------------------------------------
-
-  await enviarTexto(
-    to,
-    'Não consegui identificar essa opção. Envie "menu" para voltar ao menu principal.'
-  );
+  return false;
 
 }
 
 
-// ==========================================
+// ======================================================
 // VERIFICAÇÃO DO WEBHOOK
-// ==========================================
+// ======================================================
 
 app.get('/webhook', (req, res) => {
 
+  console.log('');
   console.log('REQUISIÇÃO DE VERIFICAÇÃO RECEBIDA');
+
 
   const mode = req.query['hub.mode'];
 
@@ -476,8 +366,10 @@ app.get('/webhook', (req, res) => {
 
 
   if (
+
     mode === 'subscribe' &&
     token === VERIFY_TOKEN
+
   ) {
 
     console.log('WEBHOOK_VERIFIED');
@@ -496,9 +388,9 @@ app.get('/webhook', (req, res) => {
 });
 
 
-// ==========================================
+// ======================================================
 // RECEBER WEBHOOK
-// ==========================================
+// ======================================================
 
 app.post('/webhook', async (req, res) => {
 
@@ -507,14 +399,15 @@ app.post('/webhook', async (req, res) => {
   console.log('WEBHOOK RECEBIDO');
   console.log('======================================');
 
+
   console.log(
     JSON.stringify(req.body, null, 2)
   );
 
 
-  // ---------------------------------------
-  // RESPONDE IMEDIATAMENTE PARA A META
-  // ---------------------------------------
+  // ====================================================
+  // RESPONDER META IMEDIATAMENTE
+  // ====================================================
 
   res.sendStatus(200);
 
@@ -530,15 +423,30 @@ app.post('/webhook', async (req, res) => {
     );
 
     return;
+
   }
 
 
-  // ========================================
-  // VERIFICAR MENSAGEM
-  // ========================================
+  // ====================================================
+  // STATUS DE MENSAGENS
+  // ====================================================
 
-  const message =
-    value.messages?.[0];
+  if (value.statuses) {
+
+    console.log(
+      'Webhook contém atualização de status.'
+    );
+
+    return;
+
+  }
+
+
+  // ====================================================
+  // VERIFICAR MENSAGEM
+  // ====================================================
+
+  const message = value.messages?.[0];
 
 
   if (!message) {
@@ -548,6 +456,7 @@ app.post('/webhook', async (req, res) => {
     );
 
     return;
+
   }
 
 
@@ -563,164 +472,322 @@ app.post('/webhook', async (req, res) => {
   );
 
 
-  // ========================================
+  // ======================================================
   // MENSAGEM DE TEXTO
-  // ========================================
+  // ======================================================
 
   if (message.type === 'text') {
 
-    const texto =
+    const textoOriginal =
       message.text?.body || '';
 
 
     console.log(
       'TEXTO RECEBIDO:',
-      texto
+      textoOriginal
     );
 
 
-    await processarTexto(
+    const processado =
+      await processarOpcao(
+        from,
+        textoOriginal
+      );
+
+
+    if (processado) {
+
+      return;
+
+    }
+
+
+    await enviarMensagem(
+
       from,
-      texto
+
+      'Não consegui identificar sua opção. Por favor, envie "oi" para acessar o menu principal.'
+
     );
 
 
     return;
+
   }
 
 
-  // ========================================
-  // BOTÃO CLICADO
-  // ========================================
+  // ======================================================
+  // BOTÃO
+  // ======================================================
 
   if (message.type === 'button') {
 
-    const buttonText =
+    const textoBotao =
       message.button?.text || '';
 
-    const buttonId =
+    const payloadBotao =
       message.button?.payload || '';
 
 
+    console.log('');
+    console.log('======================================');
+    console.log('BOTÃO RECEBIDO');
+    console.log('======================================');
+
     console.log(
-      'BOTÃO RECEBIDO:',
-      buttonText
+      'Texto do botão:',
+      textoBotao
     );
 
     console.log(
-      'PAYLOAD:',
-      buttonId
+      'Payload do botão:',
+      payloadBotao
     );
 
 
-    await processarBotao(
+    // Primeiro tenta o payload
+    let processado = false;
+
+
+    if (payloadBotao) {
+
+      processado =
+        await processarOpcao(
+          from,
+          payloadBotao
+        );
+
+    }
+
+
+    // Se o payload não funcionar,
+    // tenta o texto visível do botão
+
+    if (!processado && textoBotao) {
+
+      processado =
+        await processarOpcao(
+          from,
+          textoBotao
+        );
+
+    }
+
+
+    if (processado) {
+
+      return;
+
+    }
+
+
+    console.log(
+      'Botão não reconhecido.'
+    );
+
+
+    await enviarMensagem(
+
       from,
-      buttonId,
-      buttonText
+
+      'Não consegui identificar essa opção. Por favor, envie "oi" para acessar o menu principal.'
+
     );
 
 
     return;
+
   }
 
 
-  // ========================================
-  // BOTÃO INTERATIVO
-  // ========================================
+  // ======================================================
+  // MENSAGEM INTERATIVA
+  // ======================================================
 
   if (message.type === 'interactive') {
 
-    const interactive =
-      message.interactive;
+    console.log('');
+    console.log('======================================');
+    console.log('INTERAÇÃO RECEBIDA');
+    console.log('======================================');
 
 
-    // --------------------------------------
+    // ----------------------------------------------
     // REPLY BUTTON
-    // --------------------------------------
+    // ----------------------------------------------
 
-    if (
-      interactive?.type === 'button_reply'
-    ) {
+    if (message.interactive?.type === 'button_reply') {
 
-      const buttonId =
-        interactive.button_reply?.id || '';
+      const buttonReply =
+        message.interactive.button_reply;
 
-      const buttonText =
-        interactive.button_reply?.title || '';
+
+      const id =
+        buttonReply?.id || '';
+
+      const title =
+        buttonReply?.title || '';
 
 
       console.log(
-        'BOTÃO INTERATIVO:',
-        buttonText
+        'ID DO BOTÃO:',
+        id
       );
 
       console.log(
-        'ID:',
-        buttonId
+        'TÍTULO DO BOTÃO:',
+        title
       );
 
 
-      await processarBotao(
+      let processado = false;
+
+
+      // Primeiro tenta o ID
+      if (id) {
+
+        processado =
+          await processarOpcao(
+            from,
+            id
+          );
+
+      }
+
+
+      // Depois tenta o título
+      if (!processado && title) {
+
+        processado =
+          await processarOpcao(
+            from,
+            title
+          );
+
+      }
+
+
+      if (processado) {
+
+        return;
+
+      }
+
+
+      await enviarMensagem(
+
         from,
-        buttonId,
-        buttonText
+
+        'Não consegui identificar essa opção. Por favor, envie "oi" para acessar o menu principal.'
+
       );
 
 
       return;
+
     }
 
 
-    // --------------------------------------
+    // ----------------------------------------------
     // LIST REPLY
-    // --------------------------------------
+    // ----------------------------------------------
 
-    if (
-      interactive?.type === 'list_reply'
-    ) {
+    if (message.interactive?.type === 'list_reply') {
 
-      const buttonId =
-        interactive.list_reply?.id || '';
+      const listReply =
+        message.interactive.list_reply;
 
-      const buttonText =
-        interactive.list_reply?.title || '';
+
+      const id =
+        listReply?.id || '';
+
+      const title =
+        listReply?.title || '';
 
 
       console.log(
-        'ITEM DA LISTA:',
-        buttonText
+        'ID DA LISTA:',
+        id
       );
 
       console.log(
-        'ID:',
-        buttonId
+        'TÍTULO DA LISTA:',
+        title
       );
 
 
-      await processarBotao(
+      let processado = false;
+
+
+      if (id) {
+
+        processado =
+          await processarOpcao(
+            from,
+            id
+          );
+
+      }
+
+
+      if (!processado && title) {
+
+        processado =
+          await processarOpcao(
+            from,
+            title
+          );
+
+      }
+
+
+      if (processado) {
+
+        return;
+
+      }
+
+
+      await enviarMensagem(
+
         from,
-        buttonId,
-        buttonText
+
+        'Não consegui identificar essa opção. Por favor, envie "oi" para acessar o menu principal.'
+
       );
 
 
       return;
+
     }
+
+
+    console.log(
+      'Tipo de interação não tratado:',
+      message.interactive?.type
+    );
+
+
+    return;
 
   }
 
 
+  // ======================================================
+  // OUTROS TIPOS
+  // ======================================================
+
   console.log(
-    'Tipo de mensagem ainda não tratado:',
+    'Tipo de mensagem não tratado:',
     message.type
   );
 
 });
 
 
-// ==========================================
+// ======================================================
 // SERVIDOR
-// ==========================================
+// ======================================================
 
 const PORT =
   process.env.PORT || 3000;
@@ -729,7 +796,7 @@ const PORT =
 app.listen(PORT, () => {
 
   console.log(
-    `Servidor AtivaStock rodando na porta ${PORT}`
+    `Servidor Ativa Stock rodando na porta ${PORT}`
   );
 
 });
